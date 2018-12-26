@@ -125,7 +125,9 @@ class MySqlToGoogleCloudStorageOperator(BaseOperator):
         mysql = MySqlHook(mysql_conn_id=self.mysql_conn_id)
         conn = mysql.get_conn()
         cursor = conn.cursor()
+        print("EXECUTE QUERY")
         cursor.execute(self.sql)
+        print("RETURN RESULT")
         return cursor
 
     def _write_local_data_files(self, cursor):
@@ -142,7 +144,7 @@ class MySqlToGoogleCloudStorageOperator(BaseOperator):
         tmp_file_handle = NamedTemporaryFile(delete=True)
         tmp_file_handles = {self.filename.format(file_no): tmp_file_handle}
 
-        for row, i in enumerate(cursor):
+        for i, row in enumerate(cursor):
             if i % 10000 == 0:
                 tmp_file_handle.flush()
                 print("FLUSHED")
