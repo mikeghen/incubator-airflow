@@ -142,7 +142,10 @@ class MySqlToGoogleCloudStorageOperator(BaseOperator):
         tmp_file_handle = NamedTemporaryFile(delete=True)
         tmp_file_handles = {self.filename.format(file_no): tmp_file_handle}
 
-        for row in cursor:
+        for row, i in enumerate(cursor):
+            if i % 10000 == 0:
+                tmp_file_handle.flush()
+                print("FLUSHED")
             # Convert datetime objects to utc seconds, and decimals to floats.
             # Convert binary type object to string encoded with base64.
             row = self._convert_types(schema, col_type_dict, row)
