@@ -109,6 +109,7 @@ class MySqlToGoogleCloudStorageOperator(BaseOperator):
             files_to_upload.update(self._write_local_schema_file(cursor))
 
         # Flush all files before uploading.
+        print("WRITTING FILE TO DISK")
         for file_handle in files_to_upload.values():
             file_handle.flush()
 
@@ -141,13 +142,10 @@ class MySqlToGoogleCloudStorageOperator(BaseOperator):
         schema = list(map(lambda schema_tuple: schema_tuple[0], cursor.description))
         col_type_dict = self._get_col_type_dict()
         file_no = 0
-        tmp_file_handle = NamedTemporaryFile(delete=True)
+        tmp_file_handle = NamedTemporaryFile(delete=True,buffering=0)
         tmp_file_handles = {self.filename.format(file_no): tmp_file_handle}
 
         for i, row in enumerate(cursor):
-            if i % 10000 == 0:
-                tmp_file_handle.flush()
-                print("FLUSHED")
             # Convert datetime objects to utc seconds, and decimals to floats.
             # Convert binary type object to string encoded with base64.
             row = self._convert_types(schema, col_type_dict, row)
@@ -165,7 +163,7 @@ class MySqlToGoogleCloudStorageOperator(BaseOperator):
             # Stop if the file exceeds the file size limit.
             if tmp_file_handle.tell() >= self.approx_max_file_size_bytes:
                 file_no += 1
-                tmp_file_handle = NamedTemporaryFile(delete=True)
+                tmp_file_handle = NamedTemporaryFile(delete=True,buffering=0)
                 tmp_file_handles[self.filename.format(file_no)] = tmp_file_handle
 
         return tmp_file_handles
